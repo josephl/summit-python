@@ -25,7 +25,7 @@ class Resource(object):
 
     def create_instance(self, body):
         """Create an instance resource with a POST request to the API"""
-        resp, inst = self.request('POST', self.uri, data=body)
+        resp, inst = self.request('POST', self.uri, params=body)
         return resp, inst
 
     def request(self, method, uri, **kwargs):
@@ -54,7 +54,13 @@ class Messages(MultiResource):
         kwargs['To'] = kwargs.pop('to', None) or kwargs.pop('To', None)
         kwargs['Message'] = (kwargs.pop('body', None) or
                              kwargs.pop('Message', None))
-        self.create_instance(kwargs)
+        return self.create_instance(kwargs)
+
+    def create_instance(self, body):
+        """SMS endpoint is sms/send, so we have to override"""
+        url = '{}/send'.format(self.uri)
+        resp, inst = self.request('POST', url, params=body)
+        return resp, inst
 
 
 def make_request(method, url, params=None, auth=None):
@@ -65,8 +71,10 @@ def make_request(method, url, params=None, auth=None):
     :param auth: 2-tuple of (user, password)
     :returns: HTTP response
     """
-    resp = requests.request(method, url, params=params, auth=auth)
-    return resp
+    headers = {'content-type': 'application/json'}
+    data = json.dumps(params)
+    return requests.request(method, url, data=data, auth=auth,
+                            headers=headers)
 
 
 
