@@ -1,6 +1,8 @@
 import json
 import requests
 
+from ..exceptions import SummitRestException
+
 
 UNSET_TIMEOUT = 0.1
 PROD_CBOSS_API = 'https://api.us1.corvisa.io'
@@ -23,25 +25,35 @@ class Resource(object):
     def name(self):
         return self.__class__.__name__.lower()
 
-    def create_instance(self, body):
-        """Create an instance resource with a POST request to the API"""
-        resp, inst = self.request('POST', self.uri, params=body)
-        return resp, inst
-
     def request(self, method, uri, **kwargs):
         """
         :param method: HTTP method type
         :param uri: request uri
+        :returns: 2-tuple of (response, instance dict)
         """
         resp = make_request(method, uri, auth=self.auth, **kwargs)
         if method == 'DELETE':
             return resp, {}
-        return resp, json.loads(resp.content)
+        try:
+            instance = resp.json()
+        except ValueError:
+            instance = {}
+        return resp, instance
 
 
 class MultiResource(Resource):
     """Multiple instances of one REST resource type"""
-    pass
+
+    def create_instance(self, body):
+        """Create an instance resource with a POST request to the API"""
+        resp, inst = self.request('POST', self.uri, params=body)
+        if resp.status_code not in (200, 201):
+            raise SummitRestException(resp.status_code, self.uri,
+                                      "Resource failed to create")
+        return resp, inst
+
+    def load_instance(self, data):
+        pass
 
 
 class Messages(MultiResource):
@@ -60,6 +72,9 @@ class Messages(MultiResource):
         """SMS endpoint is sms/send, so we have to override"""
         url = '{}/send'.format(self.uri)
         resp, inst = self.request('POST', url, params=body)
+        if resp.status_code not in (200, 201):
+            raise SummitRestException(resp.status_code, self.uri,
+                                      "Resource failed to create")
         return resp, inst
 
 
