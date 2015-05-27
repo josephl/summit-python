@@ -24,7 +24,8 @@ def main():
     args = parser.parse_args()
 
     client = SummitRestClient(account=args.key, token=args.secret)
-    resp, inst = client.messages.create(from_=from_number, to=to_number,
+    resp, inst = client.messages.create(from_=getattr(args, 'from'),
+                                        to=args.to,
                                         body=args.message)
     print 'Responded with code: {}'.format(resp.status_code)
     print inst
