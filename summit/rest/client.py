@@ -1,3 +1,7 @@
+import json
+import requests
+
+
 UNSET_TIMEOUT = 0.1
 PROD_CBOSS_API = 'https://api.us1.corvisa.io'
 CURRENT_VERSION = 'v0.0.1'
@@ -22,8 +26,13 @@ class Resource(object):
     def create_instance(self, body):
         """Create an instance resource with a POST request to the API"""
         resp, inst = self.request('POST', self.uri, data=body)
+        return resp, inst
 
     def request(self, method, uri, **kwargs):
+        """
+        :param method: HTTP method type
+        :param uri: request uri
+        """
         resp = make_request(method, uri, auth=self.auth, **kwargs)
         if method == 'DELETE':
             return resp, {}
@@ -41,7 +50,10 @@ class Messages(MultiResource):
     def create(self, from_=None, **kwargs):
         """Create and send a new SMS message
         """
-        kwargs['from'] = from_
+        kwargs['From'] = from_ or kwargs.pop('From')
+        kwargs['To'] = kwargs.pop('to', None) or kwargs.pop('To', None)
+        kwargs['Message'] = (kwargs.pop('body', None) or
+                             kwargs.pop('Message', None))
         self.create_instance(kwargs)
 
 
