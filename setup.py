@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 setup(
@@ -6,7 +6,7 @@ setup(
     description='Summit API client',
     author='Joseph Lee',
     author_email='joe.lee@corvisa.com',
-    py_modules=['summit'],
+    packages=find_packages(),
     url='https://github.com/josephl/summit-python',
     keywords=['summit', 'corvisa', 'sms', 'twilio'],
     install_requires=['requests'],
