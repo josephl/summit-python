@@ -1,3 +1,28 @@
+"""
+This sample application sends an SMS message to a recipient via a POST request.
+Similar to Twilio's example, but uses the Summit API as a fallback if the
+Twilio request fails.
+
+To test, create a config file with account information in config.ini:
+---------------------------------------
+[Twilio]
+account_sid: XXXXXXXXXXXXXXX
+auth_token: YYYYYYYYYYYY
+from_number: +18005555555
+
+[Summit]
+account_sid: AAAAAAAAAAAA
+auth_token: BBBBBBBBBBB
+from_number: +14145551234
+---------------------------------------
+
+Start the Flask application:
+    python run_summit_backup.py
+
+Send a request from the command-line using curl:
+    curl -X POST --data "<message>" localhost:5000/sms/<recipient phone #>
+"""
+
 import ConfigParser
 from flask import Flask, jsonify, request
 import json
