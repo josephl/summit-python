@@ -67,12 +67,18 @@ def sms_send(recipient):
     Attempt to send SMS message using Twilio's API.
     If this fails, use the Summit API to send the SMS message.
     """
+    body = request.get_data()
     try:
         message = send_sms_through_provider('Twilio', recipient, body)
     except TwilioRestException:
         message = send_sms_through_provider('Summit', recipient, body)
 
-    return jsonify(status=message.status)
+    return jsonify({
+        message.id_key: getattr(message, message.id_key),
+        'from': message.from_,
+        'to': message.to,
+        'body': message.body,
+    })
 
 
 if __name__ == '__main__':
