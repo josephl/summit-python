@@ -4,17 +4,17 @@ Similar to Twilio's example, but uses the Summit API as a fallback if the
 Twilio request fails.
 
 To test, create a config file with account information in config.ini:
----------------------------------------
+-------------------------------------------------------------------------------
 [Twilio]
-account_sid: XXXXXXXXXXXXXXX
-auth_token: YYYYYYYYYYYY
-from_number: +18005555555
+account_sid: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+auth_token: YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY
+from_number: +15555555555
 
 [Summit]
-account_sid: AAAAAAAAAAAA
-auth_token: BBBBBBBBBBB
+account_sid: AAAAAAAAAAAAAAAAAAAAAAAA
+auth_token: BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB
 from_number: +14145551234
----------------------------------------
+-------------------------------------------------------------------------------
 
 Start the Flask application:
     python run_summit_backup.py
@@ -43,14 +43,17 @@ Clients = {
 
 
 def get_auth(provider):
+    """Get authentication info from config based on provider name"""
     return (config.get(provider, 'account_sid'),
             config.get(provider, 'auth_token'))
 
 def get_client(provider):
+    """Get provider's client object"""
     return Clients[provider](*get_auth(provider))
 
 
 def send_sms_through_provider(provider, to, body):
+    """Perform API request through provider to send an SMS message"""
     auth = get_auth(provider)
     from_number = config.get(provider, 'from_number')
     body += '\nSent using {}'.format(provider)
@@ -60,6 +63,10 @@ def send_sms_through_provider(provider, to, body):
 
 @app.route('/sms/<recipient>', methods=['POST'])
 def sms_send(recipient):
+    """
+    Attempt to send SMS message using Twilio's API.
+    If this fails, use the Summit API to send the SMS message.
+    """
     try:
         message = send_sms_through_provider('Twilio', recipient, body)
     except TwilioRestException:
