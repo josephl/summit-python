@@ -1,96 +1,9 @@
-import json
-import requests
-
-from ..exceptions import SummitRestException
+from .resources import Messages
 
 
 UNSET_TIMEOUT = 0.1
 PROD_CBOSS_API = 'https://api.us1.corvisa.io'
 CURRENT_VERSION = 'v0.0.1'
-
-
-class Resource(object):
-    """Base REST resource object"""
-
-    def __init__(self, base_uri, auth, timeout=UNSET_TIMEOUT):
-        self.base_uri = base_uri
-        self.auth = auth
-        self.timeout = timeout
-
-    @property
-    def uri(self):
-        return '{uri}/{name}'.format(uri=self.base_uri, name=self.name)
-
-    @property
-    def name(self):
-        return self.__class__.__name__.lower()
-
-    def request(self, method, uri, **kwargs):
-        """
-        :param method: HTTP method type
-        :param uri: request uri
-        :returns: 2-tuple of (response, instance dict)
-        """
-        resp = make_request(method, uri, auth=self.auth, **kwargs)
-        if method == 'DELETE':
-            return resp, {}
-        try:
-            instance = resp.json()
-        except ValueError:
-            instance = {}
-        return resp, instance
-
-
-class MultiResource(Resource):
-    """Multiple instances of one REST resource type"""
-
-    def create_instance(self, body):
-        """Create an instance resource with a POST request to the API"""
-        resp, inst = self.request('POST', self.uri, params=body)
-        if resp.status_code not in (200, 201):
-            raise SummitRestException(resp.status_code, self.uri,
-                                      "Resource failed to create")
-        return resp, inst
-
-    def load_instance(self, data):
-        pass
-
-
-class Messages(MultiResource):
-    name = 'sms'
-
-    def create(self, from_=None, **kwargs):
-        """Create and send a new SMS message
-        """
-        kwargs['From'] = from_ or kwargs.pop('From')
-        kwargs['To'] = kwargs.pop('to', None) or kwargs.pop('To', None)
-        kwargs['Message'] = (kwargs.pop('body', None) or
-                             kwargs.pop('Message', None))
-        return self.create_instance(kwargs)
-
-    def create_instance(self, body):
-        """SMS endpoint is sms/send, so we have to override"""
-        url = '{}/send'.format(self.uri)
-        resp, inst = self.request('POST', url, params=body)
-        if resp.status_code not in (200, 201):
-            raise SummitRestException(resp.status_code, self.uri,
-                                      "Resource failed to create")
-        return resp, inst
-
-
-def make_request(method, url, params=None, auth=None):
-    """
-    :param method: HTTP method
-    :param url: URL
-    :param params: dict of query parameters
-    :param auth: 2-tuple of (user, password)
-    :returns: HTTP response
-    """
-    headers = {'content-type': 'application/json'}
-    data = json.dumps(params)
-    return requests.request(method, url, data=data, auth=auth,
-                            headers=headers)
-
 
 
 class SummitRestClient(object):
